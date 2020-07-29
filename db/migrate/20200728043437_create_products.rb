@@ -1,6 +1,6 @@
-class CreateItems < ActiveRecord::Migration[5.2]
+class CreateProducts < ActiveRecord::Migration[5.2]
   def change
-    create_table :items do |t|
+    create_table :products do |t|
       t.integer :cart_id
       t.integer :fridge_id
       t.string :title

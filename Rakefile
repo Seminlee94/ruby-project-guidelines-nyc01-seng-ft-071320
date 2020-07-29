@@ -5,7 +5,7 @@ require_all "app"
 
 desc 'starts a console'
 task :console do
-  ActiveRecord::Base.logger = Logger.new(STDOUT)
-  ActiveRecord::Base.logger.level = 0
+  # ActiveRecord::Base.logger = Logger.new(STDOUT)
+  # ActiveRecord::Base.logger.level = 1
   Pry.start
 end

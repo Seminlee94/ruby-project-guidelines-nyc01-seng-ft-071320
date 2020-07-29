@@ -1,7 +1,19 @@
+#TODO
+### Add Cart To Fridge
+### Add cart to Previous Purchase
+### Refactor
+### Add recipes
+### 
+
+
+
+
+
+
 class User < ActiveRecord::Base
     has_one :fridge
     has_one :cart
-
+    has_many :cards
     
     def self.login
         choices = [ "Create a New Account", "Log into My Account"]
@@ -26,7 +38,7 @@ class User < ActiveRecord::Base
             return_user
         else 
             r_user = self.find_by(log_in_id: find_id, log_in_pass: find_pass)
-            r_user.cart.start_cart
+            r_user.main_screen
         end
     end
 
@@ -38,6 +50,7 @@ class User < ActiveRecord::Base
             password = gets.chomp
             new_user = User.create(log_in_id: username, log_in_pass: password)
             Cart.create(user_id: new_user.id)
+            Fridge.create(user_id: new_user.id)
             prompt = TTY::Prompt.new
             answer = prompt.select("Would you like to start shopping?", %w(yes no))
             case answer
@@ -45,34 +58,95 @@ class User < ActiveRecord::Base
                 new_user.cart.start_cart
             when "no"
                 new_user.main_screen
-                # prompt = TTY::Prompt.new
-                # choices = [ "View My Profile", "View My Fridge"]
-                # answer = prompt.select("What would you like to do", choices)
-                # case answer
-                # when "View My Profile"
-                # when "View My Fridge"
-                #     # binding.pry
-                #     Fridge.create(user_id: new_user.id)
-                #     new_user.fridge.start_fridge
-                # end
             end
         else 
-            puts "That log-in ID is not available. Please type in another one."
+            puts "That log-in ID is not available. Please try another."
             self.new_id
         end
     end
 
     def main_screen
         prompt = TTY::Prompt.new
-        choices = [ "View My Profile", "View My Fridge"]
-        answer = prompt.select("What would you like to do", choices)
+        choices = ["View My Profile", "View My Fridge", "Start Shopping", "Exit App"]
+        answer = prompt.select("What would you like to do?", choices)
         case answer
         when "View My Profile"
+            self.user_profile 
         when "View My Fridge"
-            # binding.pry
-            Fridge.create(user_id: new_user.id)
-            new_user.fridge.start_fridge
+            self.fridge.my_fridge
+        when "Start Shopping"
+            self.cart.start_cart
+        when "Exit App"
+            exit!
         end
+
+    end 
+
+    def user_profile
+        prompt = TTY::Prompt.new
+        choices = [ "View My Info", "View My Payment Methods", "View My Previous Shop", "View MY Previous Recipe", "Go Back to Main Screen"]
+        answer = prompt.select("What would you like to do?", choices)
+        case answer
+        when "View My Info"
+            if self.name == nil || self.address == nil
+                puts "We need your info"
+                prompt = TTY::Prompt.new
+                answer = prompt.select("Would you like to change name or address?", %w(name address))
+                case answer
+                when "name"
+                    self.name = gets.chomp
+                when "address"
+                    self.address = gets.chomp
+                end
+                puts "Name: #{self.name}"
+                puts "Address: #{self.address}"
+                self.user_profile
+            else
+                puts "Name: #{self.name}"
+                puts "Address: #{self.address}"#cart
+                self.user_profile
+            end
+        when "View My Payment Methods" # will need a class variable if we want to store different payment methods...User has many credit_cards
+            if self.cards == []
+                self.new_card
+            else
+                prompt = TTY::Prompt.new
+                puts "The cards saved in this account is(are) #{self.cards.map(&:card_number)}."
+                answer = prompt.select("Is this correct?", %w(yes no))
+                case answer
+                when "yes"
+                    self.user_profile
+                when "no"
+                    choices = ["Card Number", "Expiration Date", "CVV", "Add New Card"]
+                    answer = prompt.select("Which information would you like to update?", choices)
+                    case answer
+                    when "Card Number"
+                    when "Expiration Date"
+                    when "CVV"
+                        puts "CVV:"
+                        cvv_number = gets.chomp.to_i
+                    when "Add New Card"
+                        self.new_card
+                    end
+    
+                end
+            end
+        # when "View My Previous Shop" #before deleting the cart we can store the instances in an array here as well
+        # when "View My Previous Recipe" #same here but for the recipe array
+        when "Go Back to Main Screen"
+            self.main_screen
+        end
+    end
+
+    def new_card
+        puts "Please enter your card information"
+        puts "Card Number: "
+        number = gets.chomp.to_i
+        puts "Expiration Date: (MMYYYY)"
+        date = gets.chomp.to_i
+        puts "CVV:"
+        cvv_number = gets.chomp.to_i
+        new_card = Card.create(user_id: self.id, name: self.name, card_number: number, expiration_date: date, CVV: cvv_number)
     end
 
 end
