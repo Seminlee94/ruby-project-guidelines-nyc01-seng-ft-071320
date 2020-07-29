@@ -4,6 +4,7 @@ require 'tty-prompt'
 class Cart < ActiveRecord::Base
     belongs_to :user
     has_many :products
+    has_many :transactions
     
     def start_cart
         prompt = TTY::Prompt.new
@@ -81,12 +82,12 @@ class Cart < ActiveRecord::Base
 
     def move_items_to_fridge
         self.products.map do |i|
+            i.quantity = 0
             i.cart_id = nil
             i.fridge_id = self.user.fridge.id
             i.save
         end
     end
-
 
     def checkout
         if self.user.cards == []
@@ -107,9 +108,11 @@ class Cart < ActiveRecord::Base
                     found_card.balance -= self.sum_of_cart
                     found_card.save
                     puts "Your purchase has been completed"
+                    new_transaction = Transaction.create(user_id: self.user.id, cart_id: self.id, title: self.products.map(&:title), date: Time.now)                    
                     self.move_items_to_fridge
+                    binding.pry
                     self.start_cart
-                    # puts "Would you like to see menu possible recipes?"
+                    # puts "Would you like to see possible recipes?"
                     else
                         answer = prompt.select("Transaction failed. Would you like to select another card?", %w(yes no))
                         case answer

@@ -1,9 +1,9 @@
 #TODO
-### Add Cart To Fridge
 ### Add cart to Previous Purchase
 ### Refactor
 ### Add recipes
-### 
+### Update Card Information
+### View Previous Purchases
 
 
 
@@ -14,6 +14,7 @@ class User < ActiveRecord::Base
     has_one :fridge
     has_one :cart
     has_many :cards
+    has_many :transactions
     
     def self.login
         choices = [ "Create a New Account", "Log into My Account"]
@@ -84,7 +85,7 @@ class User < ActiveRecord::Base
 
     def user_profile
         prompt = TTY::Prompt.new
-        choices = [ "View My Info", "View My Payment Methods", "View My Previous Shop", "View MY Previous Recipe", "Go Back to Main Screen"]
+        choices = [ "View My Info", "View My Payment Methods", "View My Previous Transaction", "View MY Previous Recipe", "Go Back to Main Screen"]
         answer = prompt.select("What would you like to do?", choices)
         case answer
         when "View My Info"
@@ -128,10 +129,19 @@ class User < ActiveRecord::Base
                     when "Add New Card"
                         self.new_card
                     end
-    
                 end
             end
-        # when "View My Previous Shop" #before deleting the cart we can store the instances in an array here as well
+        when "View My Previous Transaction"
+            prompt = TTY::Prompt.new
+            choices = self.transactions.map(&:date)
+            answer = prompt.select("Which transaction would you like to view?", choices)
+            case answer
+            when answer
+                found_transaction = self.transactions[choices.index(answer)]
+                puts "#{found_transaction.title} item(s) were purchased on this day. The total was #{found_transaction.cart.products.sum(&:price)}"
+                binding.pry
+                self.user_profile
+            end
         # when "View My Previous Recipe" #same here but for the recipe array
         when "Go Back to Main Screen"
             self.main_screen
