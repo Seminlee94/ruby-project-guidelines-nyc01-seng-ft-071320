@@ -1,14 +1,6 @@
 #TODO
-### Add cart to Previous Purchase
 ### Refactor
 ### Add recipes
-### Update Card Information
-### View Previous Purchases
-
-
-
-
-
 
 class User < ActiveRecord::Base
     has_one :fridge
@@ -19,10 +11,10 @@ class User < ActiveRecord::Base
     def self.login
         choices = [ "Create a New Account", "Log into My Account"]
         prompt = TTY::Prompt.new
-        answer = prompt.select("Hello! Welcome to Cart-In, What would you like to do?", choices)
+        answer = prompt.select("Hello! Welcome to ShopNCook, What would you like to do?", choices)
         case answer
         when "Create a New Account"
-            puts "Welcome to Cart-In. To begin, please follow the instructions." 
+            puts "To begin, please follow the instructions." 
             new_id
         when "Log into My Account"
             return_user
@@ -49,7 +41,11 @@ class User < ActiveRecord::Base
         if self.find_by(log_in_id: username) == nil
             puts "Please enter a password"
             password = gets.chomp
-            new_user = User.create(log_in_id: username, log_in_pass: password)
+            puts "Please enter your name"
+            make_name = gets.chomp
+            puts "Please enter your address"
+            make_address = gets.chomp
+            new_user = User.create(log_in_id: username, log_in_pass: password, name: make_name, address: make_address)
             Cart.create(user_id: new_user.id)
             Fridge.create(user_id: new_user.id)
             prompt = TTY::Prompt.new
@@ -78,6 +74,7 @@ class User < ActiveRecord::Base
         when "Start Shopping"
             self.cart.start_cart
         when "Exit App"
+            puts "Thank you for using ShopNCook. Hope to see you again!"
             exit!
         end
 
@@ -89,74 +86,71 @@ class User < ActiveRecord::Base
         answer = prompt.select("What would you like to do?", choices)
         case answer
         when "View My Info"
-            if self.name == nil || self.address == nil
-                puts "We need your info"
+            puts "Log-in ID: #{self.log_in_id}, Password: #{self.log_in_pass}"
+            puts "Name: #{self.name}, and address: #{self.address}"
+            prompt = TTY::Prompt.new
+            answer = prompt.select("Would you like to update your profile?", %w(name address password exit))
+            case answer
+            when "name"
+                self.name = gets.chomp
+            when "address"
+                self.address = gets.chomp
+            when "password"
                 prompt = TTY::Prompt.new
-                answer = prompt.select("Would you like to change name or address?", %w(name address))
-                case answer
-                when "name"
-                    self.name = gets.chomp
-                when "address"
-                    self.address = gets.chomp
-                end
-                puts "Name: #{self.name}"
-                puts "Address: #{self.address}"
-                self.user_profile
-            else
-                puts "Name: #{self.name}"
-                puts "Address: #{self.address}"#cart
+                password = prompt.mask("password")
+                self.log_in_pass = password
+            when "exit"
                 self.user_profile
             end
-        when "View My Payment Methods" # will need a class variable if we want to store different payment methods...User has many credit_cards
+            puts "Name: #{self.name}"
+            puts "Address: #{self.address}"
+            self.user_profile
+        when "View My Payment Methods"
             if self.cards == []
                 self.new_card
             else
                 prompt = TTY::Prompt.new
-                puts "The cards saved in this account is(are) #{self.cards.map(&:card_number)}."
-                answer = prompt.select("Is this correct?", %w(yes no))
+                puts "The card(s) saved in this account is(are) #{self.cards.map(&:bank_name)}."
+                answer = prompt.select("Would you like to add a new card?", %w(yes no))
                 case answer
                 when "yes"
-                    self.user_profile
+                    self.new_card
                 when "no"
-                    choices = ["Card Number", "Expiration Date", "CVV", "Add New Card"]
-                    answer = prompt.select("Which information would you like to update?", choices)
-                    case answer
-                    when "Card Number"
-                    when "Expiration Date"
-                    when "CVV"
-                        puts "CVV:"
-                        cvv_number = gets.chomp.to_i
-                    when "Add New Card"
-                        self.new_card
-                    end
+                    self.user_profile
                 end
             end
         when "View My Previous Transaction"
+            self.transactions.reload
             prompt = TTY::Prompt.new
             choices = self.transactions.map(&:date)
             answer = prompt.select("Which transaction would you like to view?", choices)
             case answer
             when answer
+                self.transactions.reload
                 found_transaction = self.transactions[choices.index(answer)]
-                puts "#{found_transaction.title} item(s) were purchased on this day. The total was #{found_transaction.cart.products.sum(&:price)}"
-                binding.pry
+                puts "#{found_transaction.title} item(s) were purchased on this day. The total was #{self.transactions[choices.index(answer)].total}"
+                # binding.pry
                 self.user_profile
             end
-        # when "View My Previous Recipe" #same here but for the recipe array
+        when "View My Previous Recipe" #same here but for the recipe array
+            self.fridge.products
         when "Go Back to Main Screen"
             self.main_screen
         end
     end
 
+
     def new_card
         puts "Please enter your card information"
+        puts "Name of Bank:"
+        name_of_bank = gets.chomp.to_s
         puts "Card Number: "
         number = gets.chomp.to_i
         puts "Expiration Date: (MMYYYY)"
         date = gets.chomp.to_i
         puts "CVV:"
         cvv_number = gets.chomp.to_i
-        new_card = Card.create(user_id: self.id, name: self.name, card_number: number, expiration_date: date, CVV: cvv_number)
+        new_card = Card.create(bank_name: name_of_bank, user_id: self.id, name: self.name, card_number: number, expiration_date: date, CVV: cvv_number, balance: 20000000)
     end
 
 end

@@ -10,6 +10,18 @@ Card.delete_all
 Transaction.delete_all
 
 
+
+
+# products = ENV["product"]
+# product = RestClient.get(products)
+# product_data = JSON.parse(product)
+# product_id = product_data["id"]
+# product = RestClient.get("https://api.spoonacular.com/food/products/#{product_id}?apiKey=6bdcf4fe78474fd5a0f51e67c05b8985")
+# product_info = JSON.parse(product)
+# binding.pry
+
+
+
 user1 = User.create(log_in_id: "example1", log_in_pass: "123", name: "Ryan", address: "1 Elm st.")
 user2 = User.create(log_in_id: "example2", log_in_pass: "123", name: "Mandy", address: "2 Elm st.")
 user3 = User.create(log_in_id: "example3", log_in_pass: "123", name: "Susan", address: "3 Elm st.")
@@ -51,17 +63,10 @@ product13 = Product.create(cart_id: nil, fridge_id: fridge1.id, title: "pork", p
 product14 = Product.create(cart_id: nil, fridge_id: fridge2.id, title: "salmon", price: 6.50, calories: 300)
 product15 = Product.create(cart_id: nil, fridge_id: fridge2.id, title: "tuny", price: 5.50, calories: 350)
 
-transaction1 = Transaction.create(user_id: user1.id, cart_id: cart1.id, title: cart1.products.map(&:title), date: "2020-07-29 00:09:07 -0400")
-transaction1 = Transaction.create(user_id: user1.id, cart_id: cart2.id, title: cart2.products.map(&:title), date: "2020-07-29 00:11:40 -0400")
+transaction1 = Transaction.create(user_id: user1.id, cart_id: cart1.id, title: cart1.products.map(&:title), date: "2020-07-29 00:09:07 -0400", total: cart1.products.sum(&:price))  
+transaction1 = Transaction.create(user_id: user1.id, cart_id: cart2.id, title: cart2.products.map(&:title), date: "2020-07-29 00:11:40 -0400", total: cart2.products.sum(&:price))  
 
 
-# products = RestClient.get("https://api.spoonacular.com/food/products/search?query=#{product_title}&number=5&apiKey=6bdcf4fe78474fd5a0f51e67c05b8985")
-# product = RestClient.get("https://api.spoonacular.com/food/products/214146?apiKey=6bdcf4fe78474fd5a0f51e67c05b8985")
-# product_data = JSON.parse(products)
-# product_id = product_data["products"][0]["id"]
-# product = RestClient.get("https://api.spoonacular.com/food/products/#{product_id}?apiKey=6bdcf4fe78474fd5a0f51e67c05b8985")
-# product_info = JSON.parse(product)
-# binding.pry
 
 # products => {id1: "yogurt1", id2: "yogurt2"}
 
