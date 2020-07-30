@@ -17,7 +17,8 @@ class Fridge < ActiveRecord::Base
                     puts "You must search something!"
                     product_title = gets.chomp
                 end
-                api_key = ENV["SPOON_API_KEY"]
+                # api_key = ENV["SPOON_API_KEY"]
+                api_key = ENV["SPOON_API"]
             json_products = JSON.parse(RestClient.get("https://api.spoonacular.com/food/products/search?query=#{product_title}&number=5&apiKey=#{api_key}"))
             json_product_titles = json_products["products"].map{|i|i["title"]}
             answer = prompt.select("which would you like to add?", json_product_titles)
@@ -48,16 +49,13 @@ class Fridge < ActiveRecord::Base
             else
                 prompt = TTY::Prompt.new
                 answer = prompt.select("What would you like to delete?", self.products.map(&:title))
-                case answer
-                when answer
-                    found_product = self.products.select{|i| i.title == answer}
-                    puts "You have #{found_product[0].quantity} of #{found_product[0].title}(s) in your fridge. How many do you want to take out?"
-                    prompt = TTY::Prompt.new
-                    remove_quantity = prompt.slider("Quantity?", max: found_product[0].quantity, step: 1)
-                    found_product[0].quantity -= remove_quantity
-                    found_product[0].save
-                    self.products.where(quantity: 0).destroy_all
-                end
+                found_product = self.products.select{|i| i.title == answer}
+                puts "You have #{found_product[0].quantity} of #{found_product[0].title}(s) in your fridge. How many do you want to take out?"
+                prompt = TTY::Prompt.new
+                remove_quantity = prompt.slider("Quantity?", max: found_product[0].quantity, step: 1)
+                found_product[0].quantity -= remove_quantity
+                found_product[0].save
+                self.products.where(quantity: 0).destroy_all
             end
             self.my_fridge
         when "Find a Product"
@@ -67,11 +65,8 @@ class Fridge < ActiveRecord::Base
             else
                 prompt = TTY::Prompt.new
                 answer = prompt.select("Search:", self.products.map(&:title))
-                case answer
-                when answer
-                    found_product = self.products.select{|i| i.title == answer}
-                    puts "You have #{found_product[0].quantity} #{found_product[0].title}(s). It contains #{found_product[0].calories} calories."
-                end
+                found_product = self.products.select{|i| i.title == answer}
+                prompt.keypress("You have #{found_product[0].quantity} #{found_product[0].title}(s). It contains #{found_product[0].calories} calories. Press Enter to Continue", keys: [:return])
             end
             self.my_fridge
         when "View Possible Menu"
@@ -82,27 +77,73 @@ class Fridge < ActiveRecord::Base
     end
 
     def possible_menu
-        prompt = TTY::Prompt.new
-        choices = self.products.map(&:title)
-        answer = prompt.multi_select("Which ingredients would you prefer to use?", choices)
-        ing = answer.join(",+")
-        api_key = ENV["SPOON_API_KEY"]
-        list = JSON.parse(RestClient.get("https://api.spoonacular.com/recipes/findByIngredients?ingredients=#{ing}&number=2&apiKey=#{api_key}"))
-        recipe_options = list.map{|i|i["title"]}
-        choice = [recipe_options, "Go Back"].flatten
-        recipe_select = prompt.select("Which recipe would you like to view?", choice)
-        if recipe_select == "Go Back"
-            self.possible_menu
+        if self.products == [] || self.products == nil
+            prompt.keypress("Your fridge is empty! Press enter to continue", keys: [:return])
+            self.my_fridge
         else
-            recipe_title = list.select{|i|i["title"] == recipe_select}
-            recipe_id = recipe_title.map{|i|i["id"]}[0]
-            api_key = ENV["SPOON_API_KEY"]
-            analyze_menu = JSON.parse(RestClient.get("https://api.spoonacular.com/recipes/#{recipe_id}/analyzedInstructions?apiKey=#{api_key}"))
-            steps = analyze_menu[0]["steps"].map{|i| i["step"]}.each_with_index{|step, index|
-                    puts "Step #{index+1}. #{step}"
-            }
-            binding.pry
+            prompt = TTY::Prompt.new
+            choices = [self.products.map(&:title), "Go Back"].flatten
+            answer = prompt.multi_select("Which ingredients would you prefer to use?", choices)
+            if answer == ["Go Back"]
+                self.my_fridge
+            else 
+                ing = answer.join(",+")
+                # api_key = ENV["SPOON_API_KEY"]
+                api_key = ENV["SPOON_API"]
+                list = JSON.parse(RestClient.get("https://api.spoonacular.com/recipes/findByIngredients?ingredients=#{ing}&number=2&apiKey=#{api_key}"))
+                recipe_options = list.map{|i|i["title"]}
+                choice = [recipe_options, "Go Back"].flatten
+                recipe_select = prompt.select("Which recipe would you like to view?", choice)
+                if recipe_select == "Go Back"
+                    self.possible_menu
+                else
+                    recipe_title = list.select{|i|i["title"] == recipe_select}
+                    recipe_id = recipe_title.map{|i|i["id"]}[0]
+                    api_key = ENV["SPOON_API"]
+                    # api_key = ENV["SPOON_API_KEY"]
+                    analyze_menu = JSON.parse(RestClient.get("https://api.spoonacular.com/recipes/#{recipe_id}/analyzedInstructions?apiKey=#{api_key}"))
+                    if analyze_menu == [] || analyze_menu == nil
+                        prompt = TTY::Prompt.new
+                        answer = prompt.select("Sorry, we couldn't find the instruction for this recipe. Would you like to choose different recipe?", %w(yes no))
+                        case answer
+                        when "yes"
+                            self.possible_menu
+                        when "no"
+                            self.user.main_screen
+                        end
+                    else 
+                        steps = analyze_menu[0]["steps"].map{|i| i["step"]}.each_with_index{|step, index|
+                            puts "Step #{index+1}. #{step}"}
+                    end
+                end
+                shop_for_ingredients(recipe_title[0])
+            end
         end
     end
+    
+    def shop_for_ingredients(recipe)
+        prompt = TTY::Prompt.new
+        missed_id = recipe["missedIngredients"].map{|i|i["id"]}
+        missed_title = recipe["missedIngredients"].map{|i|i["name"]}
+        choices = [missed_title, "No, I would like to search for a new recipe."]
+        answer = prompt.multi_select("You're missing some ingredients. Which ones would you like to buy?", choices)
+        if answer == "I would like to search for a new recipe."
+            self.possible_menu
+        else
+            missing_item = answer.map{|answer1| recipe["missedIngredients"].select{|i|i["name"]==answer1}}
+            missing_id = missing_item.flatten.map{|i|i["id"]}
+            missing_id.each do |i|
+                i
+                # api_key = ENV["SPOON_API_KEY"]
+                api_key = ENV["SPOON_API"]
+                missing_product = JSON.parse(RestClient.get("https://api.spoonacular.com/food/products/#{i}?apiKey=#{api_key}"))
+                find_item = missing_item.flatten.select{|item|item["id"] == i}
+                puts "Name: #{find_item[0]["name"]}, price: $#{missing_product["price"]}, calories: #{missing_product["nutrition"]["calories"]}."
+                new_product = Product.create(cart_id: self.user.cart.id, title: find_item[0]["name"], quantity: 1, calories: missing_product["nutrition"]["calories"], price: missing_product["price"])
+            end
+            self.user.cart.start_cart
+        end
+    end
+
 
 end

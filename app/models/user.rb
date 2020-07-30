@@ -1,11 +1,7 @@
 #TODO
 ### Refactor
-### When person enters wrong ID/pass, can choose to make new
-### Press ANY KEY to continue
 ### check for bugs
-### remove ingredients with tbsp measurements, etc.
-### Show Missing Ingredients, would you like to buy? (buy qty. 1 of everything needed)
-### 
+### remove ingredients with tbsp measurements, etc. (future improvements)
 
 class User < ActiveRecord::Base
     has_one :fridge
@@ -32,8 +28,50 @@ class User < ActiveRecord::Base
         puts "What is your log-in password?"
         find_pass = gets.chomp
         if self.find_by(log_in_id: find_id, log_in_pass: find_pass) == nil
-            puts "That is a invalid Id and Password. Please try again"
-            return_user
+            prompt = TTY::Prompt.new
+            choices = [ "Forgot Log-in ID", "Forgot Password", "Try Again"]
+            answer = prompt.select("That is a invalid Id and Password. Please try again", choices)
+            case answer
+            when "Forgot Log-in ID"
+                puts "Enter your name:"
+                find_name = gets.chomp
+                puts "Enter your address:"
+                find_address = gets.chomp
+                find_user = self.find_by(name: find_name, address: find_address)
+                if find_user
+                    puts "Your username is #{find_user.log_in_id}."
+                    prompt.keypress("Press enter to continue", keys: [:return])
+                    return_user
+                else 
+                    answer = prompt.select("That user does not exist. Would you like to make a new one?", %w(yes no))
+                    case answer
+                    when "yes"
+                        new_id
+                    when "no"
+                        return_user
+                    end
+                end
+            when "Forgot Password"
+                puts "Enter your Log-in ID:"
+                find_id = gets.chomp
+                puts "Enter your name:"
+                find_name = gets.chomp
+                puts "Enter your address:"
+                find_address = gets.chomp
+                find_user = self.find_by(log_in_id: find_id, name: find_name, address: find_address)
+                if find_user
+                    puts "Your username is #{find_user.log_in_id}, please enter a new password:"
+                    find_user.log_in_pass = gets.chomp
+                    puts "New password set. Returning to login page."
+                    prompt.keypress("Press enter to continue", keys: [:return])
+                    return_user
+                else 
+                    puts "The information you have entered it not correct. Please try again."
+                    return_user
+                end
+            when "Try Again"
+                return_user
+            end
         else 
             r_user = self.find_by(log_in_id: find_id, log_in_pass: find_pass)
             r_user.main_screen
@@ -41,6 +79,7 @@ class User < ActiveRecord::Base
     end
 
     def self.new_id
+        prompt = TTY::Prompt.new
         puts "Enter a log-in ID."
         username = gets.chomp
         if self.find_by(log_in_id: username) == nil
@@ -53,7 +92,6 @@ class User < ActiveRecord::Base
             new_user = User.create(log_in_id: username, log_in_pass: password, name: make_name, address: make_address)
             Cart.create(user_id: new_user.id)
             Fridge.create(user_id: new_user.id)
-            prompt = TTY::Prompt.new
             answer = prompt.select("Would you like to start shopping?", %w(yes no))
             case answer
             when "yes"
@@ -61,8 +99,8 @@ class User < ActiveRecord::Base
             when "no"
                 new_user.main_screen
             end
-        else 
-            puts "That log-in ID is not available. Please try another."
+        else
+            prompt.keypress("That log-in ID is not available. Please try another. Press enter to continue", keys: [:return])
             self.new_id
         end
     end
@@ -87,44 +125,49 @@ class User < ActiveRecord::Base
 
     def user_profile
         prompt = TTY::Prompt.new
-        choices = [ "View My Info", "View My Payment Methods", "View My Previous Transaction", "View MY Previous Recipe", "Go Back to Main Screen"]
+        choices = ["View My Info", "View My Payment Methods", "View My Previous Transaction","Go Back to Main Screen"]
         answer = prompt.select("What would you like to do?", choices)
         case answer
         when "View My Info"
             puts "Log-in ID: #{self.log_in_id}, Password: #{self.log_in_pass}"
             puts "Name: #{self.name}, and address: #{self.address}"
             prompt = TTY::Prompt.new
-            answer = prompt.select("Would you like to update your profile?", %w(name address password exit))
+            choices = ["Name", "Address", "Password", "Exit"]
+            answer = prompt.select("Would you like to update your profile?", choices)
             case answer
-            when "name"
+            when "Name"
+                puts "Name:"
                 self.name = gets.chomp
-            when "address"
+            when "Address"
+                puts "Address:"
                 self.address = gets.chomp
-            when "password"
+
+            when "Password"
                 prompt = TTY::Prompt.new
-                password = prompt.mask("password")
+                password = prompt.mask("Password")
                 self.log_in_pass = password
-            when "exit"
-                self.user_profile
+            when "Exit"
+                user_profile
             end
+            self.save
             puts "Name: #{self.name}"
             puts "Address: #{self.address}"
-            self.user_profile
+            prompt.keypress("Press enter to continue", keys: [:return])
+            user_profile
         when "View My Payment Methods"
+            self.cards.reload
             if self.cards == []
-                self.new_card
+                Card.new_card(self.id, self.name)
             else
                 prompt = TTY::Prompt.new
                 puts "The card(s) saved in this account is(are) #{self.cards.map(&:bank_name)}."
                 choices = ["Add New Card", "Delete a Card", "Go Back"]
-                answer = prompt.select("Would you like to add a new card?", %w(yes no))
+                answer = prompt.select("What would you like to do?", choices)
                 case answer
                 when "Add New Card"
-                    self.new_card
-                    self.user_profile
+                    Card.new_card(self.id, self.name)
                 when "Delete a Card"
                     self.delete_card
-                    self.user_profile
                 when "Go Back"
                     self.user_profile
                 end
@@ -139,38 +182,25 @@ class User < ActiveRecord::Base
                 self.transactions.reload
                 found_transaction = self.transactions[choices.index(answer)]
                 puts "#{found_transaction.title} item(s) were purchased on this day. The total was #{self.transactions[choices.index(answer)].total}"
-                # binding.pry
+                prompt.keypress("Press enter to continue", keys: [:return])
                 self.user_profile
             end
-        when "View My Previous Recipe" #same here but for the recipe array
-            self.fridge.products
         when "Go Back to Main Screen"
-            self.main_screen
+            main_screen
         end
-    end
-
-
-    def new_card
-        puts "Please enter your card information"
-        puts "Name of Bank:"
-        name_of_bank = gets.chomp.to_s
-        puts "Card Number: "
-        number = gets.chomp.to_i
-        puts "Expiration Date: (MMYYYY)"
-        date = gets.chomp.to_i
-        puts "CVV:"
-        cvv_number = gets.chomp.to_i
-        new_card = Card.create(bank_name: name_of_bank, user_id: self.id, name: self.name, card_number: number, expiration_date: date, CVV: cvv_number, balance: 20000000)
     end
 
     def delete_card
         prompt = TTY::Prompt.new
-        choices = self.cards.map{|i| i.bank_name}
+        choices = [self.cards.map{|i| i.bank_name}, "Go Back"].flatten
         answer = prompt.select("Which card would you like to use?", choices)
-        case answer
-        when answer
+        if answer == "Go Back"
+            self.user_profile
+        else
             found_card = self.cards[choices.index(answer)]
             found_card.destroy
+            prompt.keypress("Card removed. Press enter to continue", keys: [:return])
+            self.user_profile
         end
     end
     
