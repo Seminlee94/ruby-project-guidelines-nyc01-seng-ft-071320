@@ -99,14 +99,12 @@ class Cart < ActiveRecord::Base
             end
         end
         prompt = TTY::Prompt.new
-        choices = ["Search Another Item", "Go Back to My Items", "Go Back to Shopping"]
+        choices = ["Search Another Item", "Go Back"]
         answer = prompt.select("What would you like to do?", choices)
         case answer
         when "Search Another Item"
             self.find_item
-        when "Go Back to My Items"
-            self.start_cart
-        when "Go Back to Shopping"
+        when "Go Back"
             self.start_cart
         end
     end
@@ -141,17 +139,23 @@ class Cart < ActiveRecord::Base
                 case answer
                 when answer
                     found_card = self.user.cards[choices.index(answer)]
-                    binding.pry
                     if found_card.balance >= self.sum_of_cart
-                    found_card.balance -= self.sum_of_cart
-                    found_card.save
-                    puts "Your purchase has been completed"
-                    new_transaction = Transaction.create(user_id: self.user.id, cart_id: self.id, title: self.products.map(&:title), date: Time.now, total: self.products.sum(&:price))                    
-                    self.move_items_to_fridge
-                    self.products.reload
-                    save
-                    self.start_cart
-                    # puts "Would you like to see possible recipes?"
+                        found_card.balance -= self.sum_of_cart
+                        found_card.save
+                        new_transaction = Transaction.create(user_id: self.user.id, cart_id: self.id, title: self.products.map(&:title), date: Time.now, total: self.products.sum(&:price))                    
+                        puts "Thank you for using ShopNCook! Your purchase has been completed"
+                        puts "For full service, please use our View Possible Menu option!"
+                        self.move_items_to_fridge
+                        self.products.reload
+                        save
+                        prompt = TTY::Prompt.new
+                        answer2 = prompt.select("Would you like to view your possible menu?", %w(yes no))
+                        case answer2
+                        when "yes"
+                            self.user.fridge.my_fridge
+                        when "no"
+                            self.start_cart
+                        end
                     else
                         answer = prompt.select("Transaction failed. Would you like to select another card?", %w(yes no))
                         case answer
@@ -162,8 +166,18 @@ class Cart < ActiveRecord::Base
                         end
                     end
                 end
+            when "no"
+                prompt = TTY::Prompt.new
+                choices = ["Save New Card", "Go Back to Cart"]
+                answer = prompt.select("What would you like to do?", choices)
+                    case answer
+                    when "Save New Card"
+                        self.user.new_card
+                        self.checkout
+                    when "Go Back to Cart"
+                        self.start_cart
+                    end
             end
         end
     end
-
 end

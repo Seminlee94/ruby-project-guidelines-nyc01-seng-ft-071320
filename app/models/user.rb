@@ -1,6 +1,11 @@
 #TODO
 ### Refactor
-### Add recipes
+### When person enters wrong ID/pass, can choose to make new
+### Press ANY KEY to continue
+### check for bugs
+### remove ingredients with tbsp measurements, etc.
+### Show Missing Ingredients, would you like to buy? (buy qty. 1 of everything needed)
+### 
 
 class User < ActiveRecord::Base
     has_one :fridge
@@ -111,11 +116,16 @@ class User < ActiveRecord::Base
             else
                 prompt = TTY::Prompt.new
                 puts "The card(s) saved in this account is(are) #{self.cards.map(&:bank_name)}."
+                choices = ["Add New Card", "Delete a Card", "Go Back"]
                 answer = prompt.select("Would you like to add a new card?", %w(yes no))
                 case answer
-                when "yes"
+                when "Add New Card"
                     self.new_card
-                when "no"
+                    self.user_profile
+                when "Delete a Card"
+                    self.delete_card
+                    self.user_profile
+                when "Go Back"
                     self.user_profile
                 end
             end
@@ -153,5 +163,16 @@ class User < ActiveRecord::Base
         new_card = Card.create(bank_name: name_of_bank, user_id: self.id, name: self.name, card_number: number, expiration_date: date, CVV: cvv_number, balance: 20000000)
     end
 
+    def delete_card
+        prompt = TTY::Prompt.new
+        choices = self.cards.map{|i| i.bank_name}
+        answer = prompt.select("Which card would you like to use?", choices)
+        case answer
+        when answer
+            found_card = self.cards[choices.index(answer)]
+            found_card.destroy
+        end
+    end
+    
 end
 

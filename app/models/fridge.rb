@@ -6,7 +6,7 @@ class Fridge < ActiveRecord::Base
     def my_fridge
         self.products.reload
         prompt = TTY::Prompt.new
-        choices = ["Add Product", "Delete Product", "Find a Product", "Go Back to Main Screen"]
+        choices = ["Add Product", "Delete Product", "Find a Product", "View Possible Menu", "Go Back to Main Screen"]
         answer = prompt.select("What would you like to do?", choices)
             case answer
             when "Add Product"
@@ -41,7 +41,6 @@ class Fridge < ActiveRecord::Base
                 end
             end
             self.my_fridge
-
         when "Delete Product"
             self.products.reload
             if self.products == [] || self.products == nil
@@ -61,7 +60,6 @@ class Fridge < ActiveRecord::Base
                 end
             end
             self.my_fridge
-        
         when "Find a Product"
             self.products.reload
             if self.products == [] || self.products == nil
@@ -76,10 +74,35 @@ class Fridge < ActiveRecord::Base
                 end
             end
             self.my_fridge
+        when "View Possible Menu"
+            self.possible_menu
         when "Go Back to Main Screen"
             self.user.main_screen
         end
     end
 
+    def possible_menu
+        prompt = TTY::Prompt.new
+        choices = self.products.map(&:title)
+        answer = prompt.multi_select("Which ingredients would you prefer to use?", choices)
+        ing = answer.join(",+")
+        api_key = ENV["SPOON_API_KEY"]
+        list = JSON.parse(RestClient.get("https://api.spoonacular.com/recipes/findByIngredients?ingredients=#{ing}&number=2&apiKey=#{api_key}"))
+        recipe_options = list.map{|i|i["title"]}
+        choice = [recipe_options, "Go Back"].flatten
+        recipe_select = prompt.select("Which recipe would you like to view?", choice)
+        if recipe_select == "Go Back"
+            self.possible_menu
+        else
+            recipe_title = list.select{|i|i["title"] == recipe_select}
+            recipe_id = recipe_title.map{|i|i["id"]}[0]
+            api_key = ENV["SPOON_API_KEY"]
+            analyze_menu = JSON.parse(RestClient.get("https://api.spoonacular.com/recipes/#{recipe_id}/analyzedInstructions?apiKey=#{api_key}"))
+            steps = analyze_menu[0]["steps"].map{|i| i["step"]}.each_with_index{|step, index|
+                    puts "Step #{index+1}. #{step}"
+            }
+            binding.pry
+        end
+    end
 
 end
