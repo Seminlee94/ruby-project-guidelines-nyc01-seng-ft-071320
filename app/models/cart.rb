@@ -95,27 +95,31 @@ class Cart < ActiveRecord::Base
     def api_item(product_title, api_key)
         prompt = TTY::Prompt.new
         json_products = JSON.parse(RestClient.get("https://api.spoonacular.com/food/products/search?query=#{product_title}&number=5&apiKey=#{api_key}"))
-        json_product_titles = json_products["products"].map{|i|i["title"]}
-        answer = prompt.select("Which would you like to view?", json_product_titles)
-        api_id = json_products["products"][json_product_titles.index(answer)]["id"]
-        product = JSON.parse(RestClient.get("https://api.spoonacular.com/food/products/#{api_id}?apiKey=#{api_key}"))
-        puts "Name: #{product["title"]}, price: #{product["price"]}, calories: #{product["nutrition"]["calories"]}."
-        prompt2 = TTY::Prompt.new
-        answer = prompt2.select("Would you like to add the item to your cart?", %w(yes no))
-        case answer
-        when "yes"
-            puts "Quantity:"
-            product_quantity = gets.chomp.to_i
-            var = product["title"]
-            possible_product = self.products.select{|product| product.title == var}
-            if possible_product == []
-                new_product = Product.create(title: product["title"], cart_id: self.id, quantity: product_quantity, price: product["price"], calories: product["nutrition"]["calories"])
-            else
-                possible_product[0].quantity += product_quantity
-                possible_product[0].save
+        if json_products["products"] == []
+            prompt.keypress("It looks like the grocery store does not carry this! Press enter to continue", keys: [:return])
+        else
+            json_product_titles = json_products["products"].map{|i|i["title"]}
+            answer = prompt.select("Which would you like to view?", json_product_titles)
+            api_id = json_products["products"][json_product_titles.index(answer)]["id"]
+            product = JSON.parse(RestClient.get("https://api.spoonacular.com/food/products/#{api_id}?apiKey=#{api_key}"))
+            puts "Name: #{product["title"]}, price: #{product["price"]}, calories: #{product["nutrition"]["calories"]}."
+            prompt2 = TTY::Prompt.new
+            answer = prompt2.select("Would you like to add the item to your cart?", %w(yes no))
+            case answer
+            when "yes"
+                puts "Quantity:"
+                product_quantity = gets.chomp.to_i
+                var = product["title"]
+                possible_product = self.products.select{|product| product.title == var}
+                if possible_product == []
+                    new_product = Product.create(title: product["title"], cart_id: self.id, quantity: product_quantity, price: product["price"], calories: product["nutrition"]["calories"])
+                else
+                    possible_product[0].quantity += product_quantity
+                    possible_product[0].save
+                end
+            when "no"
+                start_cart
             end
-        when "no"
-            start_cart
         end
     end
 

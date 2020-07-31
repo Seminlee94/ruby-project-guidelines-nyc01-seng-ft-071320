@@ -20,25 +20,32 @@ class Fridge < ActiveRecord::Base
                 api_key = ENV["SPOON_API_KEY"]
                 # api_key = ENV["SPOON_API"]
             json_products = JSON.parse(RestClient.get("https://api.spoonacular.com/food/products/search?query=#{product_title}&number=5&apiKey=#{api_key}"))
-            json_product_titles = json_products["products"].map{|i|i["title"]}
-            answer = prompt.select("which would you like to add?", json_product_titles)
-            case answer
-            when answer
-                puts "Quantity?"
-                product_quantity = gets.chomp.to_i
-                while product_quantity < 0
-                    puts "Must be greater than 0"
+            if json_products["products"] == []
+                prompt = TTY::Prompt.new
+               prompt.keypress("It looks like the grocery store does not carry this! Press enter to continue", keys: [:return])
+            else
+                    
+                binding.pry
+                json_product_titles = json_products["products"].map{|i|i["title"]}
+                answer = prompt.select("which would you like to add?", json_product_titles)
+                case answer
+                when answer
                     puts "Quantity?"
                     product_quantity = gets.chomp.to_i
-                end
-                found_product = self.products.select{|i| i.title == answer}
-                if found_product == []
-                    api_id = json_products["products"][json_product_titles.index(answer)]["id"]
-                    product = JSON.parse(RestClient.get("https://api.spoonacular.com/food/products/#{api_id}?apiKey=#{api_key}"))
-                    new_product = Product.create(title: product["title"], fridge_id: self.id, quantity: product_quantity, price: product["price"], calories: product["nutrition"]["calories"])
-                else
-                    found_product[0].quantity += product_quantity
-                    found_product[0].save
+                    while product_quantity < 0
+                        puts "Must be greater than 0"
+                        puts "Quantity?"
+                        product_quantity = gets.chomp.to_i
+                    end
+                    found_product = self.products.select{|i| i.title == answer}
+                    if found_product == []
+                        api_id = json_products["products"][json_product_titles.index(answer)]["id"]
+                        product = JSON.parse(RestClient.get("https://api.spoonacular.com/food/products/#{api_id}?apiKey=#{api_key}"))
+                        new_product = Product.create(title: product["title"], fridge_id: self.id, quantity: product_quantity, price: product["price"], calories: product["nutrition"]["calories"])
+                    else
+                        found_product[0].quantity += product_quantity
+                        found_product[0].save
+                    end
                 end
             end
             self.my_fridge

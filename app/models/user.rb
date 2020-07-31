@@ -1,7 +1,4 @@
-#TODO
-### Refactor
-### check for bugs
-### remove ingredients with tbsp measurements, etc. (future improvements)
+
 
 class User < ActiveRecord::Base
     has_one :fridge
