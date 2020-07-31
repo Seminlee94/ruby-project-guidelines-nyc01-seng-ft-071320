@@ -45,7 +45,8 @@ class Fridge < ActiveRecord::Base
         when "Delete Product"
             self.products.reload
             if self.products == [] || self.products == nil
-                puts "Your fridge is empty!"
+                prompt = TTY::Prompt.new
+                prompt.keypress("Your fridge is empty! Press enter to continue", keys: [:return])
             else
                 prompt = TTY::Prompt.new
                 answer = prompt.select("What would you like to delete?", self.products.map(&:title))
@@ -61,7 +62,8 @@ class Fridge < ActiveRecord::Base
         when "Find a Product"
             self.products.reload
             if self.products == [] || self.products == nil
-                puts "Your fridge is empty!"
+                prompt = TTY::Prompt.new
+                prompt.keypress("Your fridge is empty! Press enter to continue", keys: [:return])
             else
                 prompt = TTY::Prompt.new
                 answer = prompt.select("Search:", self.products.map(&:title))
@@ -78,6 +80,7 @@ class Fridge < ActiveRecord::Base
 
     def possible_menu
         if self.products == [] || self.products == nil
+            prompt = TTY::Prompt.new
             prompt.keypress("Your fridge is empty! Press enter to continue", keys: [:return])
             self.my_fridge
         else
@@ -125,10 +128,12 @@ class Fridge < ActiveRecord::Base
         prompt = TTY::Prompt.new
         missed_id = recipe["missedIngredients"].map{|i|i["id"]}
         missed_title = recipe["missedIngredients"].map{|i|i["name"]}
-        choices = [missed_title, "No, I would like to search for a new recipe."]
-        answer = prompt.multi_select("You're missing some ingredients. Which ones would you like to buy?", choices)
-        if answer == "I would like to search for a new recipe."
+        choices = [missed_title, "No, I would like to search for a new recipe.", "I have everything that I need."]
+        answer = prompt.multi_select("You're missing some ingredients. Which ones would you like to buy?", choices).flatten
+        if answer == ["No, I would like to search for a new recipe."]
             self.possible_menu
+        elsif answer == ["I have everything that I need."]
+            self.my_fridge
         else
             missing_item = answer.map{|answer1| recipe["missedIngredients"].select{|i|i["name"]==answer1}}
             missing_id = missing_item.flatten.map{|i|i["id"]}

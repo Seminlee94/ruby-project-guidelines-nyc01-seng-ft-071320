@@ -12,7 +12,7 @@ class User < ActiveRecord::Base
     def self.login
         choices = [ "Create a New Account", "Log into My Account"]
         prompt = TTY::Prompt.new
-        answer = prompt.select("Hello! Welcome to ShopNCook, What would you like to do?", choices)
+        answer = prompt.select("What would you like to do?", choices)
         case answer
         when "Create a New Account"
             puts "To begin, please follow the instructions." 
@@ -174,16 +174,23 @@ class User < ActiveRecord::Base
             end
         when "View My Previous Transaction"
             self.transactions.reload
-            prompt = TTY::Prompt.new
-            choices = self.transactions.map(&:date)
-            answer = prompt.select("Which transaction would you like to view?", choices)
-            case answer
-            when answer
-                self.transactions.reload
-                found_transaction = self.transactions[choices.index(answer)]
-                puts "#{found_transaction.title} item(s) were purchased on this day. The total was #{self.transactions[choices.index(answer)].total}"
+            if self.transactions.all == [] || self.transactions.all == nil
+                puts "You haven't made any transactions yet!"
+                prompt = TTY::Prompt.new
                 prompt.keypress("Press enter to continue", keys: [:return])
                 self.user_profile
+            else
+                prompt = TTY::Prompt.new
+                choices = self.transactions.map(&:date)
+                answer = prompt.select("Which transaction would you like to view?", choices)
+                case answer
+                when answer
+                    self.transactions.reload
+                    found_transaction = self.transactions[choices.index(answer)]
+                    puts "#{found_transaction.title} item(s) were purchased on this day. The total was #{self.transactions[choices.index(answer)].total}"
+                    prompt.keypress("Press enter to continue", keys: [:return])
+                    self.user_profile
+                end
             end
         when "Go Back to Main Screen"
             main_screen
