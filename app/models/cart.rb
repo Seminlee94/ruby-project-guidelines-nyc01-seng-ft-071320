@@ -45,13 +45,13 @@ class Cart < ActiveRecord::Base
             prompt.keypress("Press enter to continue", keys: [:return])
         else
             prompt = TTY::Prompt.new
-            choices = [self.products.map(&:title), "Go Back"]
+            choices = [self.products.map(&:title), "Go Back"].flatten
             answer = prompt.select("Your item(s) is(are):", choices)
             if answer == "Go Back"
                 start_cart
             else
                 found_product = self.products[choices.index(answer)]
-                puts "You have #{found_product.quantity} of #{found_product.title}. This item has #{found_product.calories} calories, $#{found_product.price}"
+                puts "You have #{found_product.quantity} of #{found_product.title}. This item costs $#{found_product.price}, and has #{found_product.calories} calories"
                 prompt = TTY::Prompt.new
                 answer = prompt.select("Would you like to remove this item?", %w(yes no))
                 case answer
@@ -134,7 +134,7 @@ class Cart < ActiveRecord::Base
     def checkout
         self.user.cards.reload
         if self.user.cards == [] || self.user.cards == nil
-            self.user.new_card
+            Card.new_card(self.user.id, self.user.name)
             checkout
         else
             prompt = TTY::Prompt.new
@@ -148,7 +148,6 @@ class Cart < ActiveRecord::Base
                 if answer == "Go Back"
                     start_cart
                 else
-                    binding.pry
                     found_card = self.user.cards[choices.index(answer)]
                     if found_card.balance >= self.sum_of_cart
                         found_card.balance -= self.sum_of_cart
