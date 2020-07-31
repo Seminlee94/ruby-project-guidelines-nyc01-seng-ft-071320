@@ -141,8 +141,17 @@ class Fridge < ActiveRecord::Base
                 i
                 # api_key = ENV["SPOON_API_KEY"]
                 api_key = ENV["SPOON_API"]
-                missing_product = JSON.parse(RestClient.get("https://api.spoonacular.com/food/products/#{i}?apiKey=#{api_key}"))
+                missing_product = JSON.parse(RestClient.get("https://api.spoonacular.com/food/products/#{i}?apiKey=#{api_key}"){ |response, request, result, &block|
+                    case response.code
+                    when 400
+                        p "It seems the grocery store is out of this!"
+                        self.my_fridge
+                    when 200
+                        response
+                    end}, quirks_mode: true )
+                    binding.pry
                 find_item = missing_item.flatten.select{|item|item["id"] == i}
+                binding.pry
                 puts "Name: #{find_item[0]["name"]}, price: $#{missing_product["price"]}, calories: #{missing_product["nutrition"]["calories"]}."
                 new_product = Product.create(cart_id: self.user.cart.id, title: find_item[0]["name"], quantity: 1, calories: missing_product["nutrition"]["calories"], price: missing_product["price"])
             end

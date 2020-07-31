@@ -8,5 +8,4 @@ class CreateCards < ActiveRecord::Migration[5.2]
       t.integer :CVV
     end
   end
-  end
 end

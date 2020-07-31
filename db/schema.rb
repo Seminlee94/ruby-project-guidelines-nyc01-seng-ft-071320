@@ -13,11 +13,11 @@
 ActiveRecord::Schema.define(version: 2020_07_29_141017) do
 
   create_table "cards", force: :cascade do |t|
+    t.integer "user_id"
     t.string "name"
     t.integer "card_number"
     t.integer "expiration_date"
     t.integer "CVV"
-    t.integer "user_id"
     t.float "balance"
     t.string "bank_name"
   end

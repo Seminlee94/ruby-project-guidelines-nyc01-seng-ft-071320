@@ -93,6 +93,7 @@ class Cart < ActiveRecord::Base
     end
 
     def api_item(product_title, api_key)
+        binding.pry
         prompt = TTY::Prompt.new
         json_products = JSON.parse(RestClient.get("https://api.spoonacular.com/food/products/search?query=#{product_title}&number=5&apiKey=#{api_key}"))
         json_product_titles = json_products["products"].map{|i|i["title"]}
@@ -132,6 +133,7 @@ class Cart < ActiveRecord::Base
     end
 
     def checkout
+        binding.pry
         self.user.cards.reload
         if self.user.cards == [] || self.user.cards == nil
             Card.new_card(self.user.id, self.user.name)
