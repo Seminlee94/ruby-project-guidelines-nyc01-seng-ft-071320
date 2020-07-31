@@ -17,8 +17,8 @@ class Fridge < ActiveRecord::Base
                     puts "You must search something!"
                     product_title = gets.chomp
                 end
-                # api_key = ENV["SPOON_API_KEY"]
-                api_key = ENV["SPOON_API"]
+                api_key = ENV["SPOON_API_KEY"]
+                # api_key = ENV["SPOON_API"]
             json_products = JSON.parse(RestClient.get("https://api.spoonacular.com/food/products/search?query=#{product_title}&number=5&apiKey=#{api_key}"))
             json_product_titles = json_products["products"].map{|i|i["title"]}
             answer = prompt.select("which would you like to add?", json_product_titles)
@@ -91,8 +91,8 @@ class Fridge < ActiveRecord::Base
                 self.my_fridge
             else 
                 ing = answer.join(",+")
-                # api_key = ENV["SPOON_API_KEY"]
-                api_key = ENV["SPOON_API"]
+                api_key = ENV["SPOON_API_KEY"]
+                # api_key = ENV["SPOON_API"]
                 list = JSON.parse(RestClient.get("https://api.spoonacular.com/recipes/findByIngredients?ingredients=#{ing}&number=2&apiKey=#{api_key}"))
                 recipe_options = list.map{|i|i["title"]}
                 choice = [recipe_options, "Go Back"].flatten
@@ -102,8 +102,8 @@ class Fridge < ActiveRecord::Base
                 else
                     recipe_title = list.select{|i|i["title"] == recipe_select}
                     recipe_id = recipe_title.map{|i|i["id"]}[0]
-                    api_key = ENV["SPOON_API"]
-                    # api_key = ENV["SPOON_API_KEY"]
+                    # api_key = ENV["SPOON_API"]
+                    api_key = ENV["SPOON_API_KEY"]
                     analyze_menu = JSON.parse(RestClient.get("https://api.spoonacular.com/recipes/#{recipe_id}/analyzedInstructions?apiKey=#{api_key}"))
                     if analyze_menu == [] || analyze_menu == nil
                         prompt = TTY::Prompt.new
@@ -139,8 +139,8 @@ class Fridge < ActiveRecord::Base
             missing_id = missing_item.flatten.map{|i|i["id"]}
             missing_id.each do |i|
                 i
-                # api_key = ENV["SPOON_API_KEY"]
-                api_key = ENV["SPOON_API"]
+                api_key = ENV["SPOON_API_KEY"]
+                # api_key = ENV["SPOON_API"]
                 missing_product = JSON.parse(RestClient.get("https://api.spoonacular.com/food/products/#{i}?apiKey=#{api_key}"){ |response, request, result, &block|
                     case response.code
                     when 400
@@ -149,9 +149,9 @@ class Fridge < ActiveRecord::Base
                     when 200
                         response
                     end}, quirks_mode: true )
-                    binding.pry
+                    # binding.pry
                 find_item = missing_item.flatten.select{|item|item["id"] == i}
-                binding.pry
+                # binding.pry
                 puts "Name: #{find_item[0]["name"]}, price: $#{missing_product["price"]}, calories: #{missing_product["nutrition"]["calories"]}."
                 new_product = Product.create(cart_id: self.user.cart.id, title: find_item[0]["name"], quantity: 1, calories: missing_product["nutrition"]["calories"], price: missing_product["price"])
             end
