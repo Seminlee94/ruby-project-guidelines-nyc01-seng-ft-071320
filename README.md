@@ -1,5 +1,5 @@
 # SHOP N COOK
-Shop N Cook will help your cook time easier, faster, and more enjoyable. 
+🍚  Shop N Cook will help your cook time easier, faster, and more enjoyable!!! 🍚 🍚 🍚 
 - With Shop N Cook, you can shop for ingredients, look through recipe for possible food selection while you wait.
 - OR, you can choose a recipe first, and find ingredients you need and shop.
 
@@ -19,6 +19,6 @@ Spoonacular API
 
 ## To run this CLI...
 1. Clone this repository
-2. bundle install
+2. ```bundle install```
 3. Run ```ruby tools/console.rb``` in your terminal.
 4. Create a new account and explore!
