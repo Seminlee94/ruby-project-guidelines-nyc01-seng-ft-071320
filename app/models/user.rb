@@ -1,5 +1,3 @@
-
-
 class User < ActiveRecord::Base
     has_one :fridge
     has_one :cart

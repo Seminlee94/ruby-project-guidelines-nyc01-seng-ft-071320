@@ -19,13 +19,12 @@ class Fridge < ActiveRecord::Base
                 end
                 api_key = ENV["SPOON_API_KEY"]
                 # api_key = ENV["SPOON_API"]
+                ## Using API to retrieve items searched
             json_products = JSON.parse(RestClient.get("https://api.spoonacular.com/food/products/search?query=#{product_title}&number=5&apiKey=#{api_key}"))
             if json_products["products"] == []
                 prompt = TTY::Prompt.new
                prompt.keypress("It looks like the grocery store does not carry this! Press enter to continue", keys: [:return])
             else
-                    
-                binding.pry
                 json_product_titles = json_products["products"].map{|i|i["title"]}
                 answer = prompt.select("which would you like to add?", json_product_titles)
                 case answer
@@ -40,6 +39,7 @@ class Fridge < ActiveRecord::Base
                     found_product = self.products.select{|i| i.title == answer}
                     if found_product == []
                         api_id = json_products["products"][json_product_titles.index(answer)]["id"]
+                        ## Using API to grab a particular item and find its price & calories
                         product = JSON.parse(RestClient.get("https://api.spoonacular.com/food/products/#{api_id}?apiKey=#{api_key}"))
                         new_product = Product.create(title: product["title"], fridge_id: self.id, quantity: product_quantity, price: product["price"], calories: product["nutrition"]["calories"])
                     else
@@ -100,7 +100,7 @@ class Fridge < ActiveRecord::Base
                 ing = answer.join(",+")
                 api_key = ENV["SPOON_API_KEY"]
                 # api_key = ENV["SPOON_API"]
-                list = JSON.parse(RestClient.get("https://api.spoonacular.com/recipes/findByIngredients?ingredients=#{ing}&number=2&apiKey=#{api_key}"))
+                list = JSON.parse(RestClient.get("https://api.spoonacular.com/recipes/findByIngredients?ingredients=#{ing}&number=5&apiKey=#{api_key}"))
                 recipe_options = list.map{|i|i["title"]}
                 choice = [recipe_options, "Go Back"].flatten
                 recipe_select = prompt.select("Which recipe would you like to view?", choice)
@@ -111,6 +111,7 @@ class Fridge < ActiveRecord::Base
                     recipe_id = recipe_title.map{|i|i["id"]}[0]
                     # api_key = ENV["SPOON_API"]
                     api_key = ENV["SPOON_API_KEY"]
+                    ## Using API to find recipe for a particular menu
                     analyze_menu = JSON.parse(RestClient.get("https://api.spoonacular.com/recipes/#{recipe_id}/analyzedInstructions?apiKey=#{api_key}"))
                     if analyze_menu == [] || analyze_menu == nil
                         prompt = TTY::Prompt.new
@@ -149,16 +150,15 @@ class Fridge < ActiveRecord::Base
                 api_key = ENV["SPOON_API_KEY"]
                 # api_key = ENV["SPOON_API"]
                 missing_product = JSON.parse(RestClient.get("https://api.spoonacular.com/food/products/#{i}?apiKey=#{api_key}"){ |response, request, result, &block|
+                ## If there is no data for a recipe, it will throw an error page
                     case response.code
-                    when 400
+                    when 400 ## error page
                         p "It seems the grocery store is out of this!"
                         self.my_fridge
-                    when 200
+                    when 200 ## success page
                         response
                     end}, quirks_mode: true )
-                    # binding.pry
                 find_item = missing_item.flatten.select{|item|item["id"] == i}
-                # binding.pry
                 puts "Name: #{find_item[0]["name"]}, price: $#{missing_product["price"]}, calories: #{missing_product["nutrition"]["calories"]}."
                 new_product = Product.create(cart_id: self.user.cart.id, title: find_item[0]["name"], quantity: 1, calories: missing_product["nutrition"]["calories"], price: missing_product["price"])
             end
