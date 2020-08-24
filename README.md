@@ -1,22 +1,24 @@
-User story:
+# SHOP N COOK
+Shop N Cook will help your cook time easier, faster, and more enjoyable. 
+- With Shop N Cook, you can shop for ingredients, look through recipe for possible food selection while you wait.
+- OR, you can choose a recipe first, and find ingredients you need and shop.
 
-    - User should be able to create an account, including login and personal information
-    
-    - User should be able to edit account information
-    
-    - User should be able to view, add, and remove ingredients in their fridge
-    
-    - User should be able to search database for ingredients by name and purchase ingredients
-    
-    - User should be able to add purchased ingredients to fridge
-    
-    - User should be able to search database for recipes based on owned ingredients
-    
-    - User should be able to reivew past purchased
-    
-    
-    To Run this CLI, bundle install all gems.
-    Run "ruby tools/console.rb"
-    Create a New Account
-    Buy ingredints
-    View purchased ingredients in Fridge
+## This project includes...
+Spoonacular API
+- Retrieve ingredients: title, price, calories
+- Retrieve recipes: title, ingredients, steps
+
+## User should be able to...
+- Create an account, including login and personal information
+- Edit account information
+- View, add, and remove ingredients in their fridge
+- Search database for ingredients by name and purchase ingredients
+- Add purchased ingredients to fridge
+- Search database for recipes based on owned ingredients
+- Reivew past purchased
+
+## To run this CLI...
+1. Clone this repository
+2. bundle install
+3. Run ```ruby tools/console.rb``` in your terminal.
+4. Create a new account and explore!
