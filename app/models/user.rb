@@ -154,7 +154,15 @@ class User < ActiveRecord::Base
         when "View My Payment Methods"
             self.cards.reload
             if self.cards == []
-                Card.new_card(self.id, self.name)
+                prompt = TTY::Prompt.new
+                choices = ["Add new card", "Go Back"]
+                answer = prompt.select("What would you like to do?", choices)
+                    case answer
+                    when "Add new card"
+                        Card.new_card(self.id, self.name)
+                    when "Go Back"
+                        self.user_profile
+                    end
             else
                 prompt = TTY::Prompt.new
                 puts "The card(s) saved in this account is(are) #{self.cards.map(&:bank_name)}."

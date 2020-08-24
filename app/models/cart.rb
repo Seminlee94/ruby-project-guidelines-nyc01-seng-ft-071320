@@ -94,7 +94,7 @@ class Cart < ActiveRecord::Base
 
     def api_item(product_title, api_key)
         prompt = TTY::Prompt.new
-        json_products = JSON.parse(RestClient.get("https://api.spoonacular.com/food/products/search?query=#{product_title}&number=5&apiKey=#{api_key}"))
+        json_products = JSON.parse(RestClient.get("https://api.spoonacular.com/food/products/search?query=#{product_title}&number=10&apiKey=#{api_key}"))
         if json_products["products"] == []
             prompt.keypress("It looks like the grocery store does not carry this! Press enter to continue", keys: [:return])
         else

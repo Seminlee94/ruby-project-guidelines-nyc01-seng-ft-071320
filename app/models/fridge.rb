@@ -19,13 +19,11 @@ class Fridge < ActiveRecord::Base
                 end
                 api_key = ENV["SPOON_API_KEY"]
                 # api_key = ENV["SPOON_API"]
-            json_products = JSON.parse(RestClient.get("https://api.spoonacular.com/food/products/search?query=#{product_title}&number=5&apiKey=#{api_key}"))
+            json_products = JSON.parse(RestClient.get("https://api.spoonacular.com/food/products/search?query=#{product_title}&number=10&apiKey=#{api_key}"))
             if json_products["products"] == []
                 prompt = TTY::Prompt.new
                prompt.keypress("It looks like the grocery store does not carry this! Press enter to continue", keys: [:return])
             else
-                    
-                binding.pry
                 json_product_titles = json_products["products"].map{|i|i["title"]}
                 answer = prompt.select("which would you like to add?", json_product_titles)
                 case answer
@@ -73,9 +71,14 @@ class Fridge < ActiveRecord::Base
                 prompt.keypress("Your fridge is empty! Press enter to continue", keys: [:return])
             else
                 prompt = TTY::Prompt.new
+                choices = [self.products.map(&:title), "Go Back"]
                 answer = prompt.select("Search:", self.products.map(&:title))
-                found_product = self.products.select{|i| i.title == answer}
-                prompt.keypress("You have #{found_product[0].quantity} #{found_product[0].title}(s). It contains #{found_product[0].calories} calories. Press Enter to Continue", keys: [:return])
+                if answer == "Go Back"
+                    self.my_fridge
+                else
+                    found_product = self.products.select{|i| i.title == answer}
+                    prompt.keypress("You have #{found_product[0].quantity} #{found_product[0].title}(s). It contains #{found_product[0].calories} calories. Press Enter to Continue", keys: [:return])
+                end
             end
             self.my_fridge
         when "View Possible Menu"
@@ -100,7 +103,7 @@ class Fridge < ActiveRecord::Base
                 ing = answer.join(",+")
                 api_key = ENV["SPOON_API_KEY"]
                 # api_key = ENV["SPOON_API"]
-                list = JSON.parse(RestClient.get("https://api.spoonacular.com/recipes/findByIngredients?ingredients=#{ing}&number=2&apiKey=#{api_key}"))
+                list = JSON.parse(RestClient.get("https://api.spoonacular.com/recipes/findByIngredients?ingredients=#{ing}&number=10&apiKey=#{api_key}"))
                 recipe_options = list.map{|i|i["title"]}
                 choice = [recipe_options, "Go Back"].flatten
                 recipe_select = prompt.select("Which recipe would you like to view?", choice)
@@ -152,7 +155,7 @@ class Fridge < ActiveRecord::Base
                     case response.code
                     when 400
                         p "It seems the grocery store is out of this!"
-                        self.my_fridge
+                        self.possible_menu
                     when 200
                         response
                     end}, quirks_mode: true )
