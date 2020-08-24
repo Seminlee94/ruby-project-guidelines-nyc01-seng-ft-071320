@@ -47,12 +47,12 @@ After checkout, you can see that...
 Enjoy rest of your experience with Shop N Cook!
 
 ## Developers
-Se Min Lee
+### Se Min Lee
 - email: seminlee2794@gmail.com
 - github: https://github.com/Seminlee94
 - linkedIn: https://www.linkedin.com/in/se-min-lee-149188105/
 
-Jacob Lozano
+### Jacob Lozano
 
 # Demo
 - https://www.youtube.com/watch?v=TVFmlVFrffw&t=5s  << Shop N Cook
