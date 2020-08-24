@@ -26,12 +26,10 @@ Spoonacular API
 ## Into the app 🚀 
 Let's create a new account, and fill the fridge! Go to "View My Fridge" and start searching the items you have in your house. If there is no option for your item, please choose the closest one. There is also delete/find a product option, so delete a product if you used the ingredient for a recipe. (Stretch goal #1: delete the product with correct quantity if it was used in a recipe)
 
-### image source #1
 <img src= './images/image1.png'>
 
 Once you finished adding items into the fridge, you can start "View Possible Menu" and choose items that you want to use. 
 
-### image source #2
 <img src= './images/image2.png'>
 
 The app will provide selections of menu. Once chosen, you will see instructions of recipe, abd a list of missing ingredients, if any. You can choose to shop for those, or continue with your ingredients.
@@ -44,7 +42,6 @@ After checkout, you can see that...
 - items have been removed from the cart.
 - latest transaction history was updated.
 
-### image source #3
 <img src= './images/image3.png'>
 
 Enjoy rest of your experience with Shop N Cook!
