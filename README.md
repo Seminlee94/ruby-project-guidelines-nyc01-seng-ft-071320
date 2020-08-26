@@ -51,9 +51,12 @@ Enjoy rest of your experience with Shop N Cook!
 - email: seminlee2794@gmail.com
 - github: https://github.com/Seminlee94
 - linkedIn: https://www.linkedin.com/in/se-min-lee-149188105/
+- Medium: https://medium.com/@mlsml94
+- portfolio: https://seminlee94.github.io/semin/   <--- coming soon!
 
 ### Jacob Lozano
 
 # Demo
 - https://www.youtube.com/watch?v=TVFmlVFrffw&t=5s  << Shop N Cook
-- https://www.youtube.com/watch?v=sn4SqkDkPZQ&t=62s  << Q & A website using Ruby on Rails
+- https://www.youtube.com/watch?v=sn4SqkDkPZQ&t=62s  << Q & A website using Ruby on Rails (Check out my 2nd project as well!)
+- https://github.com/cdemarti/mod2_final_project    << code for my 2nd project
