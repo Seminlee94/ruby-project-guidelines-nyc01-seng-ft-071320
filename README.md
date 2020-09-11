@@ -52,7 +52,7 @@ Enjoy rest of your experience with Shop N Cook!
 - github: https://github.com/Seminlee94
 - linkedIn: https://www.linkedin.com/in/se-min-lee-149188105/
 - Medium: https://medium.com/@mlsml94
-- portfolio: https://seminlee94.github.io/semin/   <--- coming soon!
+- portfolio: https://seminlee94.github.io/semin/
 
 ### Jacob Lozano
 
